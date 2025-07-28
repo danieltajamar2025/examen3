@@ -1,14 +1,11 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
-
-name: Despliegue React a S3
+name: Despliegue a S3 y CloudFront
 
 on:
   push:
-    branches: [master]  # O el nombre de tu rama principal
+    branches: [master]
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -18,22 +15,28 @@ jobs:
       - name: Instalar Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'  # O tu versión preferida
+          node-version: '18'
 
       - name: Instalar dependencias
         run: npm install
 
-      - name: Build de producción
+      - name: Compilar proyecto
         run: npm run build
 
-      - name: Desplegar a S3
-        uses: jakejarvis/s3-sync-action@v0.5.1
+      - name: Configurar credenciales de AWS
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          args: --delete
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}  # Incluye esto solo si usas credenciales temporales
+          aws-region: us-east-1  # O tu región real
+
+      - name: Subir a S3
+        run: aws s3 sync build/ s3://$S3_BUCKET_NAME --delete
         env:
-          AWS_S3_BUCKET: miapp-bucket-dani
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          SOURCE_DIR: build
+          S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+
+      - name: Invalidar caché de CloudFront
+        run: aws cloudfront create-invalidation --distribution-id $CF_DISTRIBUTION_ID --paths "/*"
+        env:
+          CF_DISTRIBUTION_ID: ${{ secrets.CF_DISTRIBUTION_ID }}
