@@ -1,8 +1,10 @@
+import './App.css';
+
 function App() {
   return (
-    <div>
-      <h1>Mi App desplegada en AWS S3</h1>
-      <p>Aplicación React simple lista para despliegue</p>
+    <div className="app-container">
+      <h1 className="title">Mi App desplegada en AWS S3</h1>
+      <p className="subtitle">Aplicación React simple lista para despliegue en la nube</p>
     </div>
   );
 }
