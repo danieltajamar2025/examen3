@@ -28,15 +28,14 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}  # Incluye esto solo si usas credenciales temporales
-          aws-region: us-east-1  # O tu región real
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}  # Puedes quitar esta línea si no usas credenciales temporales
+          aws-region: us-east-1
 
       - name: Subir a S3
-        run: aws s3 sync build/ s3://$S3_BUCKET_NAME --delete
-        env:
-          S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+        run: aws s3 sync build/ s3://miapp-bucket-dani --delete
 
       - name: Invalidar caché de CloudFront
-        run: aws cloudfront create-invalidation --distribution-id $CF_DISTRIBUTION_ID --paths "/*"
+        run: aws cloudfront create-invalidation --distribution-id ${{ secrets.CF_DISTRIBUTION_ID }} --paths "/*"
         env:
           CF_DISTRIBUTION_ID: ${{ secrets.CF_DISTRIBUTION_ID }}
+
